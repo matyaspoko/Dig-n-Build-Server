@@ -15,10 +15,13 @@ namespace DigNBuildServer
                if (FileLogging)
                     Log.FileLogging = true;
                Log.LogLine(Log.LogLevel.Debug, "Starting server at " + IP + ":" + port.ToString() + "...");
-               IPAddress = IP;
-               ClientHeandler.OpenPort(port);
-               System.Threading.Thread.Sleep(3000);
-               ClientHeandler.ClosePort();
+               BlackList.LoadList();
+
+          }
+
+          public static ClientDisconnectMessage isClientAcceptable(string name, string ip)
+          {
+               return null;
           }
      }
 }
