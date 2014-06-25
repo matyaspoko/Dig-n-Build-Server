@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace DigNBuildServer
 {
@@ -21,6 +22,10 @@ namespace DigNBuildServer
 
           public static ClientDisconnectMessage isClientAcceptable(string name, string ip)
           {
+               if (BlackList.isOnList(name))
+                    return new CDMs.BannedIP();
+               if (BlackList.isOnList(System.Net.IPAddress.Parse(ip)))
+                    return new CDMs.BannedIP();
                return null;
           }
      }

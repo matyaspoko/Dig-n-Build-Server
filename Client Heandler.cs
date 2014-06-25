@@ -16,6 +16,7 @@ namespace DigNBuildServer
           static TcpListener listener;
           static Task tcpAccepter = new Task(Accepter);
           static bool KillAccepter = false;
+          static Dictionary<string, Socket> Clients = new Dictionary<string, Socket>();
 
           public static void StartAccepting()
           {
@@ -30,7 +31,24 @@ namespace DigNBuildServer
           {
                while (!KillAccepter)
                {
-                    
+                    Socket client = listener.AcceptSocket();
+                    Request rqst = Receive(client);
+                    if (rqst.myType == Request.RequestType.UserNameInfo)
+                    {
+                         string name = rqst.text;
+                         ClientDisconnectMessage cds = Core.isClientAcceptable(name, getSocketIP(client).ToString());
+                         if (cds == null)
+                         {
+                              Log.LogLine(Log.LogLevel.Info, "Player " + name + " joined game!");
+                              Clients.Add(name,client);
+                         }
+                         else
+                              Disconnect(client, cds);
+                    }
+                    else
+                    {
+ 
+                    }
                }
 
                KillAccepter = false;
@@ -63,6 +81,26 @@ namespace DigNBuildServer
                     listener.Stop();
                PortOpened = false;
                Log.LogLine(Log.LogLevel.Warning, "Port is closed...");
+          }
+
+          public static void Disconnect(Socket skt, ClientDisconnectMessage cdm)
+          {
+               Responce resp = new Responce(Responce.ResponceType.Disconnect, skt, cdm);
+               resp.Send();
+               skt.Disconnect(false);
+               skt.Close();
+          }
+
+          private static Request Receive(Socket skt)
+          {
+               byte[] buffer = new byte[Constants.MaxPaketSize];
+               skt.Receive(buffer);
+               return new Request(buffer);
+          }
+
+          private static IPAddress getSocketIP(Socket skt)
+          {
+               return ((IPEndPoint)skt.RemoteEndPoint).Address;
           }
      }
 
@@ -123,6 +161,22 @@ namespace DigNBuildServer
                sw.WriteLine("# IP | NAME");
                sw.Flush();
                sw.Close();
+          }
+
+          public static bool isOnList(string name)
+          {
+               foreach (KeyValuePair<string, IPAddress> kvp in list)
+                    if (kvp.Key == name)
+                         return true;
+               return false;
+          }
+
+          public static bool isOnList(IPAddress ip)
+          {
+               foreach (KeyValuePair<string, IPAddress> kvp in list)
+                    if (kvp.Value.ToString() == ip.ToString())
+                         return true;
+               return false;
           }
      }
 }
